@@ -159,3 +159,28 @@ SELECT * FROM stitch_annotation as m,
 stitch_interaction_all as m_t
 where m.`Ingredient id` = '9232' 
 and m.Stitch_cid_m = m_t.stitch_id;
+
+
+## tcm-mesh
+use tcm_mesh;
+SELECT count(*) FROM tcm_mesh.herb_ingredients;
+SELECT count(distinct(herb)) FROM tcm_mesh.herb_ingredients;
+SELECT count(distinct(chemical)) FROM tcm_mesh.herb_ingredients;
+
+SELECT count(*) FROM tcm_mesh.side_effect;
+SELECT count(distinct(chemical)) FROM tcm_mesh.side_effect;
+SELECT count(distinct(side_effect)) FROM tcm_mesh.side_effect;
+
+SELECT count(*) FROM tcm_mesh.chemical_protein_associations;
+SELECT count(distinct(chemical)) FROM tcm_mesh.chemical_protein_associations;
+SELECT count(distinct(protein)) FROM tcm_mesh.chemical_protein_associations;
+
+SELECT count(*) FROM tcm_mesh.toxicity;
+SELECT count(distinct(name)) FROM tcm_mesh.toxicity;
+SELECT count(distinct(toxicity)) FROM tcm_mesh.toxicity;
+
+SELECT * FROM herb_info as h,
+            herb_ingredients as h_m
+            where h.`pinyin name` = 'A WEI'
+            and h.`pinyin name` = h_m.herb;
+
