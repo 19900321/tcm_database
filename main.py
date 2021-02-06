@@ -6,7 +6,7 @@ if __name__ == '__main__':
     # tcm_id_read.main()
     # tcm_mesh_read.main()
     # tcm_herb_read.main()
-    # symmap_read.main()
-    etcm_read.main()
+    symmap_read.main()
+    # etcm_read.main()
 
 
