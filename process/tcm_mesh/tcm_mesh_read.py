@@ -4,6 +4,8 @@ import pandas as pd
 import io
 import requests
 import os
+from process.mysql_setting.connections import query_mysql_pd, save_to_mysql_pd
+
 
 def download_data():
     down_load_links_1 = {
@@ -52,6 +54,33 @@ def tcm_mesh_save_to_mysql(path_selected):
             v.to_sql(name=k, con=conn, if_exists='fail', index=False)
         except:
             continue
+
+def simply_herb_ingre_target():
+    database_name = 'tcm_mesh'
+    sql_ingre_target = """SELECT * FROM chemical_protein_associations
+                    ;"""
+
+    sql_ingre = """SELECT * FROM 
+                        compounds
+                        ;"""
+
+    sql_herb_ingre = """SELECT * FROM herb_ingredients
+                            ;"""
+
+    pd_result_herb_ingre = query_mysql_pd(sql_string=sql_herb_ingre, database_name=database_name)
+    pd_result_ingre_target = query_mysql_pd(sql_string=sql_ingre_target, database_name=database_name)
+    tcm_ingre = list(pd_result_herb_ingre['chemical'].unique())
+    pd_result_ingre_target_tcm = pd_result_ingre_target[pd_result_ingre_target['chemical'].isin(tcm_ingre)]
+    save_to_mysql_pd(pd_result=pd_result_ingre_target_tcm,
+                     database_name=database_name,
+                     saved_name='tcm_chemical_protein_associations')
+
+    pd_result_ingre = query_mysql_pd(sql_string=sql_ingre, database_name=database_name)
+
+    pd_result_ingre_tcm = pd_result_ingre[pd_result_ingre['chemical'].isin(tcm_ingre)]
+    save_to_mysql_pd(pd_result=pd_result_ingre_tcm,
+                     database_name=database_name,
+                     saved_name='tcm_compounds')
 
 
 def main():

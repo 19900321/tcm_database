@@ -1,5 +1,12 @@
 # TCM-id
 SELECT count(*) FROM tcm_id.tcm_plant_ingredient_pairs_allingredients;
+SELECT count(distinct(Plant_ID)) FROM tcm_id.tcm_plant_ingredient_pairs_allingredients;
+SELECT count(distinct(cp_i.Ingredient_ID)) FROM tcm_id.tcm_plant_ingredient_pairs_allingredients;
+
+SELECT count(*) FROM tcm_id.tcm_ingredients_tar_activi;
+SELECT count(distinct(Ingredient_ID)) FROM tcm_id.tcm_ingredients_tar_activi;
+SELECT count(distinct(Target_ID)) FROM tcm_id.tcm_ingredients_tar_activi;
+
 SELECT count(*) FROM tcm_id.disease_info;
 
 SELECT count(*) FROM tcm_id.herb_targeted_human_proteins;
@@ -16,6 +23,8 @@ SELECT count(distinct(Target_ID)) FROM tcm_id.tcm_ingredients_tar_activi;
 
 SELECT count(*) FROM tcm_id.cp_targets;
 SELECT count(*) FROM tcm_id.formulae_indications;
+
+SELECT count(*) FROM tcm_id.cp_ingredients_onlyactive;
 
 SELECT count(*) FROM tcm_id.formulae_indications;
 SELECT count(distinct(`Prescription ID`)) FROM tcm_id.formulae_indications;
@@ -175,12 +184,89 @@ SELECT count(*) FROM tcm_mesh.chemical_protein_associations;
 SELECT count(distinct(chemical)) FROM tcm_mesh.chemical_protein_associations;
 SELECT count(distinct(protein)) FROM tcm_mesh.chemical_protein_associations;
 
+SELECT count(distinct(chemical)) FROM tcm_mesh.chemical_protein_associations where `combined score` >= 700;
+create table herb_ingre_tar SELECT cp.*
+FROM tcm_mesh.chemical_protein_associations as cp,
+tcm_mesh.herb_ingredients as c where
+cp.chemical = c.chemical;
+
 SELECT count(*) FROM tcm_mesh.toxicity;
 SELECT count(distinct(name)) FROM tcm_mesh.toxicity;
 SELECT count(distinct(toxicity)) FROM tcm_mesh.toxicity;
 
-SELECT * FROM herb_info as h,
-            herb_ingredients as h_m
-            where h.`pinyin name` = 'A WEI'
-            and h.`pinyin name` = h_m.herb;
+create table compounds as SELECT t.chemical, t.`CAN string`, t.name FROM tcm_mesh.chemical_protein_associations as t group by chemical;
 
+
+SELECT * FROM herb_info as h,
+            herb_ingredients as h_m,
+            compounds as m
+            where h.`pinyin name` = 'A WEI'
+            and h.`pinyin name` = h_m.herb
+            and m.chemical = h_m.chemical;
+            
+
+
+SELECT * FROM compounds as m,
+            protein_gene_links as t,
+            chemical_protein_associations as m_t
+            where m.chemical = 'CID000005815'
+            and m_t.chemical = m.chemical
+            and m_t.protein = t.protein;
+
+
+SELECT * FROM 
+            chemical_protein_associations as m_t
+            where m_t.chemical = 'CID000005815';
+		
+SELECT * FROM 
+	tcm_mesh.side_effect as side
+	where side.chemical = 'CID000005815';
+            
+SELECT * FROM 
+            tcm_mesh.toxicity as toxi
+            where toxi.chemical  = 'CID000005815';
+            
+## ETCM
+
+SELECT count(*) FROM etcm.herb_ingredient;
+SELECT count(distinct(herb_id)) FROM etcm.herb_ingredient;
+SELECT count(distinct(ingre_id)) FROM etcm.herb_ingredient;
+
+SELECT count(*) FROM etcm.ingredient_target;
+SELECT count(distinct(target)) FROM etcm.ingredient_target;
+SELECT count(distinct(ingre_id)) FROM etcm.ingredient_target;
+
+use etcm;
+SELECT * FROM herb_info as h,
+            herb_ingredient_target as h_m,
+            ingredient_info as m
+            where h.`Herb Name in Chinese` = '艾叶'
+            and h.herb_id = h_m.herb_id
+            and m.Ingredient_id = h_m.ingre_id;
+
+## symmap
+SELECT count(*) FROM symmap.smit where Molecule_formula IS NOT NULL AND
+NOT Molecule_formula = ' ';
+
+SELECT count(distinct(Herb_id)) FROM symmap.smhb_smit;
+
+SELECT count(*) FROM symmap.smit_smtt;
+SELECT count(distinct(MOL_id)) FROM symmap.smit_smtt;
+SELECT count(distinct(Gene_id)) FROM symmap.smit_smtt;
+
+
+#herb
+SELECT count(*) FROM tcm_herb.herb_ingredient_info where Ingredient_Smilecompounds IS NOT NULL;
+
+
+#TCMIO
+
+SELECT count(*) FROM tcmio.tcm_ingredient_relation;
+SELECT count(distinct(tcm_id)) FROM tcmio.tcm_ingredient_relation;
+SELECT count(distinct(ingredient_id)) FROM tcmio.tcm_ingredient_relation;
+
+SELECT count(*) FROM tcmio.ingredient_target_relation;
+SELECT count(distinct(ingredient_id)) FROM tcmio.ingredient_target_relation;
+SELECT count(distinct(target_id)) FROM tcmio.ingredient_target_relation;
+
+SELECT COUNT(*) FROM tcmio.ingredient WHERE smiles is not null ;

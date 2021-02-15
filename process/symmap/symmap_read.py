@@ -95,14 +95,14 @@ def run_pipeline(id_list):
         pickle.dump(ingre_sym_mm, handle)
 
 
-def merge_files():
+def merge_files(term):
     saved_path = '../../processed_data/symmap_ingre/'
     all_dictionary = {}
     for file in os.listdir(saved_path):
         file_path = saved_path + file
         herb_dict = pickle.load(open(file_path, 'rb'))
         all_dictionary.update(herb_dict)
-    pickle.dump(all_dictionary, open('../../processed_data/symm_{}_pairs'.format('SMIT')))
+    pickle.dump(all_dictionary, open('../../processed_data/symm_{}_pairs'.format(term),'wb'))
 
 
 def main():
@@ -125,14 +125,15 @@ def main():
     #     pickle.dump(herb_sym_herb, handle)
 
     ingre_sym_mm = get_herb_sym_mm_relationship('SMIT', 19595)
-    arrange_herb_sym_mm_relationship('SMIT')
     with(open('processed_data/symm_{}_pairs'.format('SMIT'), 'wb')) as handle:
         pickle.dump(ingre_sym_mm, handle)
+    arrange_herb_sym_mm_relationship('SMIT')
+
 
     # pairs_all= pickle.load(open('processed_data/symm_SMMS_pairs', 'rb'))
 
 if __name__ == '__main__':
-    ingre_id_list_set = [range(200 * i+1, 200 * (i + 1)+1) for i in list(range(0, 200))]
+    ingre_id_list_set = [range(200 * i+1, 200 * (i + 1)+1) for i in list(range(70, 100))]
     pool = mp.Pool(6)
 
     funclist = []
@@ -143,5 +144,5 @@ if __name__ == '__main__':
     for f in funclist:
         f.get()
 
-    # merge_files()
+    # merge_files('SMIT')
     # arrange_herb_sym_mm_relationship('SMIT')
