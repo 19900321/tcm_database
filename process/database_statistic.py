@@ -3,6 +3,10 @@ import pandas as pd
 from math import pi
 from process.pyvenn import venn
 from process.mysql_setting.connections import query_mysql_pd, save_to_mysql_pd
+import asyncio
+import pyecharts.options as opts
+from pyecharts.charts import Tree
+
 
 def plot_radar_2():
     def make_spider(row, title, color):
@@ -108,7 +112,8 @@ def get_herb_overlap():
     # fig.show()
     plt.savefig('result/figure/herb_overlap.png')
 
-def ingredients_properties():
+
+def get_ingredients_properties():
     ingre_all_dict = {'etcm': ('ingredient_info', 'External Link to PubChem'),
                      'symmap': ('smit', 'PubChem_id'),
                      'tcm_herb': ('herb_ingredient_info', 'PubChem_id'),
@@ -131,6 +136,7 @@ def ingredients_properties():
         ingre_properties_dict[d] = list(pd_result_herb.columns)
 
     return ingre_properties_dict
+
 
 def get_ingredient_overlap():
     database_selelcted = ['etcm', 'symmap', 'tcm_herb', 'tcm_id', 'tcmid', 'tcmsp']
@@ -163,16 +169,84 @@ def get_ingredient_overlap():
     # fig.show()
     plt.savefig('result/figure/ingre_overlap.png')
 
+
+def detect_annotation(pro_list):
+    structure = ['struc', 'smil', ' formula', 'can', 'inchi']
+    annotation = ['name', 'alia', 'synony']
+    links = ['_id', 'pubchem', 'cid', 'chem', 'cas']
+    term_dict = {'structure': structure,
+                 'annotation': annotation,
+                 'links': links,
+                 'ADMET': structure+annotation+links}
+
+    child_dict = []
+    for type_term, terms in term_dict.items():
+        type_term_list = []
+        if type_term != 'ADMET':
+            for p in pro_list:
+                if any(t in p.lower() for t in terms):
+                    type_term_list.append({'name': p.capitalize()})
+        else:
+            for p in pro_list:
+                if all(t not in p.lower() for t in terms):
+                    type_term_list.append({'name': p.capitalize()})
+
+        child_dict.append({"children": type_term_list, 'name': type_term})
+
+    return child_dict
+
 def get_adme_properties():
-    pass
+    ingre_pro = get_ingredients_properties()
+    clean_tree_list = []
+    for d, p in ingre_pro.items():
+        print(d)
+        if d == 'tcmsp':
+            p = [p_i[17:] for p_i in p]
+        if d == 'etcm':
+            p = [p_i if 'ADMET' not in p_i else p_i[5] for p_i in p]
+        clean_tree_list.append({d: detect_annotation(p)})
+    return d
+
+
+def plot_physical_adme_tree():
+    ingre_pro = get_ingredients_properties()
+
+    clean_tree_list = []
+    for d, p in ingre_pro.items():
+        print(d)
+        if d == 'tcmsp':
+            p = [p_i[17:] for p_i in p]
+        if d == 'etcm':
+            p = [p_i if 'ADMET' not in p_i else p_i[5] for p_i in p ]
+        clean_tree_list.append({"children": detect_annotation(p), 'name': d})
+    data = {"children": clean_tree_list, 'name': 'TCM_database'}
+
+    (
+        Tree(init_opts=opts.InitOpts(width="2000px", height="1200px"))
+            .add(
+            series_name="",
+            data=[data],
+            pos_top='18%',
+            pos_bottom='14%',
+            layout='radial',
+            symbol='emptyCircle',
+            symbol_size=7,
+            initial_tree_depth=4,
+            is_expand_and_collapse=True
+        )
+            .set_global_opts(
+            tooltip_opts=opts.TooltipOpts(trigger="item", trigger_on="mousemove")
+        )
+            .render("result/figure/radial_tree.html")
+    )
+
+
 
 def get_target_properties():
     pass
 
 def get_disease_properties():
     pass
-
-
 
 
 def get_herb_ingre_pairs():
@@ -193,4 +267,7 @@ def ADME_correlation():
 def main():
     # plot_radar_2()
     # get_herb_overlap()
-    get_ingredient_overlap()
+    # herb_pro = get_herb_properties()
+    # ingre_pro = get_ingredients_properties()
+    # get_ingredient_overlap()
+    plot_physical_adme_tree()

@@ -19,6 +19,12 @@ def read_herb_files(path_selected):
     return database_dict
 
 
+def save_herb_ingre_mysql():
+    ingre_pd = pd.read_csv('original_data/tcm_herb/HERB_ingredient_info.txt', sep='\t')
+    col_wrong = list(ingre_pd.columns)
+    ingre_pd.columns = col_wrong[1:] + [col_wrong[0]]
+    save_to_mysql_pd(ingre_pd, database_name='tcm_herb', saved_name='herb_ingredient_info')
+
 def tcm_mesh_save_to_mysql(path_selected):
 
     ## first open mysql the local host, than create database tcm_herb, than click right to eit sceme, to utf8mb4
@@ -27,11 +33,13 @@ def tcm_mesh_save_to_mysql(path_selected):
     engine = create_engine('mysql://root:Mqxs320321wyy@localhost/tcm_herb?charset=utf8mb4')
     conn = engine.connect()
     database_dict = read_herb_files(path_selected)
-    for k,v in database_dict.items():
-        try:
-            v.to_sql(name=k, con=conn, if_exists='fail', index=False)
-        except:
-            continue
+    for k, v in database_dict.items():
+        if k != 'herb_ingredient_info':
+            try:
+                v.to_sql(name=k, con=conn, if_exists='fail', index=False)
+            except:
+                continue
+    save_herb_ingre_mysql()
 
 
 def extract_web():
@@ -62,7 +70,3 @@ def main():
     path_selected = 'original_data/{}/'.format(database_selected)
     tcm_mesh_save_to_mysql(path_selected)
 
-    ingre_pd = pd.read_csv('original_data/tcm_herb/HERB_ingredient_info.txt', sep='\t')
-    col_wrong = list(ingre_pd.columns)
-    ingre_pd.columns = col_wrong[1:] + [col_wrong[0]]
-    save_to_mysql_pd(ingre_pd, database_name='tcm_herb', saved_name='herb_ingredient_info')
