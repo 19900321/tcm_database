@@ -6,7 +6,7 @@ import os
 import tqdm
 import pickle
 import multiprocessing as mp
-
+from process.mysql_setting.connections import query_mysql_pd, save_to_mysql_pd
 
 def clean_properties(property_herb):
 
@@ -137,15 +137,27 @@ def merge_files():
 
     pickle.dump(all_dictionary, open('processed_data/etcm_herb_dict', 'wb'))
 
+def prepare_herb_ingre_all():
+    database_name = 'etcm'
+    sql = """SELECT * FROM herb_info as h,
+                herb_ingredient_target as h_m,
+                ingredient_info as m
+                where h.herb_id = h_m.herb_id
+                and m.Ingredient_id = h_m.ingre_id;
+                """
+    pd_result = query_mysql_pd(sql_string=sql, database_name=database_name)
+    save_to_mysql_pd(pd_result, database_name=database_name, saved_name='herb_ingre_all')
+
 
 def main():
-    merge_files()
-    herb_dict = pickle.load(open('processed_data/etcm_herb_dict', 'rb'))
-    all_id = set(range(1, 403))
-    in_ids = set(herb_dict.keys())
-
-    left_ids = all_id.difference(in_ids)
-    get_all_herb_info(left_ids)
+    # merge_files()
+    # herb_dict = pickle.load(open('processed_data/etcm_herb_dict', 'rb'))
+    # all_id = set(range(1, 403))
+    # in_ids = set(herb_dict.keys())
+    #
+    # left_ids = all_id.difference(in_ids)
+    # get_all_herb_info(left_ids)
+    prepare_herb_ingre_all()
 
 #
 # if __name__ == '__main__':
