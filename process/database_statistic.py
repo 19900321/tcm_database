@@ -11,7 +11,7 @@ import asyncio
 import pyecharts.options as opts
 from pyecharts.charts import Tree
 from pyecharts.charts import Sankey
-
+import matplotlib.gridspec as gridspec
 
 def plot_radar_2():
     def make_spider(row, title, color):
@@ -472,47 +472,97 @@ def get_herb_ingre_pairs_detail():
 
 
 def get_herb_ingre_pairs_correlartion():
-    herb_ingre_china_cid = pickle.load(open('result/herb_ingre_china_cid.dict', 'rb'))
-    databases = list(herb_ingre_china_cid.keys())
 
 
     def herb_cor(overlap_herb, d_1, d_2, herb_ingre_china_cid):
-        jacard = []
+        jacard_all = []
+        rate_all = []
         for h in overlap_herb:
             union_l = len(set(herb_ingre_china_cid[d_1][h]) & set(herb_ingre_china_cid[d_2][h]))
             over = len(set(herb_ingre_china_cid[d_1][h]) | set(herb_ingre_china_cid[d_2][h]))
-            jacard.append(union_l/over)
-        return np.mean(jacard)
+            jacard_all.append(union_l/over)
+            rate_all.append(union_l/len(set(herb_ingre_china_cid[d_1][h])))
+        jacard_mean = np.mean(jacard_all)
+        rate_mean = np.mean(rate_all)
+        return jacard_all, rate_all, jacard_mean, rate_mean, len(overlap_herb)
 
-    cor_pd = pd.DataFrame(columns=databases, index=databases)
+
+    def plot_jarcard(cor_pd_list, save_name):
+
+        cmap = sns.diverging_palette(220, 10, as_cmap=True)
+        fig = plt.figure(figsize=(16, 8))
+
+        sns.set(font='Arial', style="white", context="paper", font_scale=1.2)
+        n_dict = {0: 'A', 1: 'B'}
+
+        for i, cor_pd in enumerate(cor_pd_list):
+            ax1 = fig.add_subplot(1, 2, i+1)
+            cor_pd = cor_pd.astype(float)
+            sns.heatmap(cor_pd,
+                             annot=True,
+                             linewidths=.5,
+                             cmap=cmap,
+                             square=True,
+                             cbar_kws=dict(use_gridspec=False,
+                                           shrink=.7,
+                                           location='right'),
+
+                             cbar=True
+                             )
+            ax1.set_title(n_dict[i], loc='left')
+
+        plt.savefig('result/figure/herb_ingre_overlap.png')
+
+
+    def plot_density(cor_pd_list, save_name):
+
+        sns.set(font='Arial', style="white", context="paper", font_scale=2.4)
+
+        for i, cor_pd in enumerate(cor_pd_list):
+            g = sns.FacetGrid(cor_pd,
+                              row='d1',
+                              col='d2',
+                              margin_titles=True,
+                              despine=False,
+                              gridspec_kws={"wspace": 0.1, 'hspace': 0.1})
+            g.map_dataframe(sns.histplot,
+                            "value",
+                            palette="Set2")
+
+            plt.savefig('result/figure/herb_ingre_{}.png'.format(save_name[i]))
+
+
+    herb_ingre_china_cid = pickle.load(open('result/herb_ingre_china_cid.dict', 'rb'))
+    databases = list(herb_ingre_china_cid.keys())
+    cor_jacard = pd.DataFrame(columns=databases, index=databases)
+    cor_rate = pd.DataFrame(columns=databases, index=databases)
+    cor_rate_extend = []
+    cor_jacard_extend = []
     for d_1 in databases:
         for d_2 in databases:
             overlap_herb = set(herb_ingre_china_cid[d_1]) & set(herb_ingre_china_cid[d_2])
-            jaccard = herb_cor(overlap_herb, d_1, d_2, herb_ingre_china_cid)
-            cor_pd.loc[d_1, d_2] = jaccard
+            jacard_all, rate_all, jacard_mean, rate_mean, over = herb_cor(overlap_herb, d_1, d_2, herb_ingre_china_cid)
+            cor_jacard.loc[d_1, d_2] = jacard_mean
+            cor_jacard.loc[d_2, d_1] = over
+            cor_rate.loc[d_1, d_2] = rate_mean
+            cor_rate_extend.append([d_1, d_2, rate_all])
+            cor_jacard_extend.append([d_1, d_2, jacard_all])
 
-    cor_pd = cor_pd.astype(float)
-    mask = np.triu(np.ones_like(cor_pd, dtype=np.bool))
-    cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    plt.figure(figsize=(8,8))
-    ax = sns.heatmap(cor_pd,
-                annot=True,
-                mask=mask,
-                linewidths=.5,
-                cmap=cmap,
-                square=True,
-                cbar_kws=dict(use_gridspec=False,
-                              shrink=.7,
-                              location='right'),
-                cbar=True
-            )
+    cor_rate_extend = pd.DataFrame(cor_rate_extend, columns=['d1', 'd2', 'value'])
+    cor_rate_extend = cor_rate_extend.explode('value', ignore_index=True)
+    cor_jacard_extend = pd.DataFrame(cor_jacard_extend, columns=['d1', 'd2', 'value'])
+    cor_jacard_extend = cor_jacard_extend.explode('value', ignore_index=True)
 
-    #plt.show()
-    plt.savefig('result/figure/herb_ingre.png')
-
-
-
-
+    data_list = [cor_rate,
+                 cor_jacard,
+                 cor_rate_extend,
+                 cor_jacard_extend]
+    save_name = ['cor_rate',
+                 'cor_jacard',
+                 'cor_rate_extend',
+                 'cor_jacard_extend']
+    plot_jarcard(data_list[0:2], save_name[0:2] )
+    plot_density(data_list[2:], save_name[2:])
 
 
 
@@ -530,7 +580,10 @@ def main():
     # get_ingredient_overlap()
     # plot_physical_adme_tree()
     # plot_db_links()
-    herb_ingre_result_dict = get_herb_ingre_pairs_detail()
-    pickle.dump(herb_ingre_result_dict, open('result/herb_ingre_china_cid.dict', 'wb'))
-    herb_ingre_china_cid  = pickle.load(open('result/herb_ingre_china_cid.dict', 'rb'))
-    return herb_ingre_result_dict
+
+    # herb_ingre_result_dict = get_herb_ingre_pairs_detail()
+    # pickle.dump(herb_ingre_result_dict, open('result/herb_ingre_china_cid.dict', 'wb'))
+    # herb_ingre_china_cid  = pickle.load(open('result/herb_ingre_china_cid.dict', 'rb'))
+
+    get_herb_ingre_pairs_correlartion()
+

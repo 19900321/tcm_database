@@ -176,6 +176,11 @@ SELECT count(*) FROM tcm_mesh.herb_ingredients;
 SELECT count(distinct(herb)) FROM tcm_mesh.herb_ingredients;
 SELECT count(distinct(chemical)) FROM tcm_mesh.herb_ingredients;
 
+SELECT count(*) FROM tcm_mesh.tcm_chemical_protein_associations;
+SELECT count(distinct(protein)) FROM tcm_mesh.tcm_chemical_protein_associations;
+SELECT count(distinct(chemical)) FROM tcm_mesh.tcm_chemical_protein_associations;
+
+
 SELECT count(*) FROM tcm_mesh.side_effect;
 SELECT count(distinct(chemical)) FROM tcm_mesh.side_effect;
 SELECT count(distinct(side_effect)) FROM tcm_mesh.side_effect;
@@ -240,8 +245,7 @@ use etcm;
 SELECT * FROM herb_info as h,
             herb_ingredient_target as h_m,
             ingredient_info as m
-            where h.`Herb Name in Chinese` = '艾叶'
-            and h.herb_id = h_m.herb_id
+            where h.herb_id = h_m.herb_id
             and m.Ingredient_id = h_m.ingre_id;
 
 ## symmap

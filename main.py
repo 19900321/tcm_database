@@ -9,6 +9,6 @@ if __name__ == '__main__':
     # tcm_herb_read.main()
     # symmap_read.main()
     # etcm_read.main()
-    herb_ingre_result_dict = database_statistic.main()
+     database_statistic.main()
 
 
